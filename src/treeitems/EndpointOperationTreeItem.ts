@@ -11,5 +11,11 @@ export class EndpointOperationTreeItem extends vscode.TreeItem {
         super(`${name.toUpperCase()}`);
         this.description = parentPath;
         this.iconPath = icon ?? new vscode.ThemeIcon("circle-outline");
+        this.contextValue = "endpoint-operation";
+
+        this.collapsibleState =
+            this.operation.requestBody === undefined
+                ? vscode.TreeItemCollapsibleState.None
+                : vscode.TreeItemCollapsibleState.Collapsed;
     }
 }
