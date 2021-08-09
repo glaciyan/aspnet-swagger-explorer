@@ -1,54 +1,73 @@
+import SwaggerParser = require("@apidevtools/swagger-parser");
 import got, { Response } from "got/dist/source";
 import * as vscode from "vscode";
+import { OpenAPIObject, PathItemObject } from "openapi3-ts";
+import { EndpointTreeItem } from "./EndpointTreeItem";
+import { EndpointOperationTreeItem } from "./EndpointOperationTreeItem";
 
-interface OpenApi {
-    openApi: string;
-    info: { title: string; version: string };
-    paths: any;
-    components: any;
-}
+type TreeItemTypes = EndpointTreeItem | EndpointOperationTreeItem;
 
-class SwaggerTreeProvider
-    implements
-        vscode.TreeDataProvider<Endpoint | HttpMethodTreeItem | RequestBodyParameter>
-{
+class SwaggerTreeProvider implements vscode.TreeDataProvider<TreeItemTypes> {
     constructor(public swaggerJsonUrl: string) {}
 
-    getTreeItem(element: Endpoint): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    public openApi?: OpenAPIObject;
+
+    getTreeItem(element: TreeItemTypes): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
 
-    async getChildren(
-        element?: Endpoint | HttpMethodTreeItem
-    ): Promise<Endpoint[] | HttpMethodTreeItem[] | RequestBodyParameter[]> {}
+    async getChildren(element?: TreeItemTypes): Promise<TreeItemTypes[]> {
+        if (!this.openApi) {
+            const parsed = JSON.parse(
+                (await got(this.swaggerJsonUrl)).body
+            ) as OpenAPIObject;
+            this.openApi = parsed;
+        }
 
+        if (!element) {
+            return Promise.resolve(
+                Object.entries(this.openApi.paths).map(
+                    ([name, path]: [string, PathItemObject]) => {
+                        return new EndpointTreeItem(path, name);
+                    }
+                )
+            );
+        } else if (element.contextValue === "endpoint") {
+            element = element as EndpointTreeItem;
+
+            return Promise.resolve(
+                element.operations.map(
+                    (op) =>
+                        new EndpointOperationTreeItem(
+                            op.obj,
+                            op.type,
+                            element!.name,
+                            op.icon
+                        )
+                )
+            );
+        } else {
+            return Promise.resolve([]);
+        }
+    }
+
+    //#region refresh
     private _onDidChangeTreeData: vscode.EventEmitter<
-        Endpoint | undefined | null | void
-    > = new vscode.EventEmitter<Endpoint | undefined | null | void>();
+        TreeItemTypes | undefined | null | void
+    > = new vscode.EventEmitter<TreeItemTypes | undefined | null | void>();
 
     readonly onDidChangeTreeData?:
-        | vscode.Event<void | Endpoint | null | undefined>
+        | vscode.Event<void | TreeItemTypes | null | undefined>
         | undefined = this._onDidChangeTreeData.event;
 
     refresh() {
+        this.openApi = undefined;
         this._onDidChangeTreeData.fire();
     }
+    //#endregion
 }
 
-class RequestBodyParameter extends vscode.TreeItem {
-    constructor(
-        public readonly parameter: {
-            name: string;
-            type: string;
-        }
-    ) {
-        super(parameter.name, vscode.TreeItemCollapsibleState.None);
-        this.description = parameter.type;
-        this.iconPath = new vscode.ThemeIcon("symbol-interface");
-    }
-}
-
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     const defaultSwaggerJsonUrl = "http://localhost:5000/swagger/v1/swagger.json";
     const swaggerTree = new SwaggerTreeProvider(defaultSwaggerJsonUrl);
 
