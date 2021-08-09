@@ -19,7 +19,7 @@
         "commands": [
             {
                 "command": "aspswagview.setSwaggerJsonUrl",
-                "title": "Set Swagger Json Url",
+                "title": "Set Swagger.json Url",
                 "icon": "$(edit)"
             },
             {
@@ -74,7 +74,7 @@
         "viewsWelcome": [
             {
                 "view": "swagger",
-                "contents": "Couldn't find a swagger.json file.\n[Set swagger.json url](command:aspswagview.setSwaggerJsonUrl)"
+                "contents": "Couldn't find a swagger.json file.\n[Set swagger.json Url](command:aspswagview.setSwaggerJsonUrl)"
             }
         ]
     },
