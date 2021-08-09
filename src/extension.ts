@@ -35,6 +35,7 @@ class SwaggerTreeProvider implements vscode.TreeDataProvider<TreeItemTypes> {
 
     async getChildren(element?: TreeItemTypes): Promise<TreeItemTypes[]> {
         if (!this.openApi) {
+            if (this.swaggerJsonUrl.trim().length === 0) return Promise.resolve([]);
             const parsed = JSON.parse(
                 (await got(this.swaggerJsonUrl)).body
             ) as OpenAPIObject;
@@ -102,7 +103,9 @@ class SwaggerTreeProvider implements vscode.TreeDataProvider<TreeItemTypes> {
 
 export async function activate(context: vscode.ExtensionContext) {
     const defaultSwaggerJsonUrl = "http://localhost:5000/swagger/v1/swagger.json";
-    const swaggerTree = new SwaggerTreeProvider(defaultSwaggerJsonUrl);
+    const swaggerTree = new SwaggerTreeProvider(
+        (await context.workspaceState.get("aspswagview.setJsonUrl")) ?? ""
+    );
 
     const tree = vscode.window.registerTreeDataProvider("swagger", swaggerTree);
 
@@ -115,6 +118,7 @@ export async function activate(context: vscode.ExtensionContext) {
         if (newUrl) {
             swaggerTree.swaggerJsonUrl = newUrl ?? defaultSwaggerJsonUrl;
             swaggerTree.refresh();
+            await context.workspaceState.update("aspswagview.setJsonUrl", newUrl);
         }
     };
 
