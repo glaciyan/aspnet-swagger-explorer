@@ -1,7 +1,11 @@
 {
     "name": "asp-net-swagger-viewer",
     "displayName": "ASP.NET Swagger Viewer",
-    "description": "View and call endpoints from ASP.NET Swagger",
+    "description": "View and call endpoints from ASP.NET with Swagger",
+    "publisher": "slimetsp",
+    "repository": {
+        "url": "https://github.com/slimetsp/aspnet-swagger-explorer"
+    },
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.59.0"
