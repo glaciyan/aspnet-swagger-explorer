@@ -1,6 +1,6 @@
 {
     "name": "asp-net-swagger-viewer",
-    "displayName": "ASP.NET Swagger Viewer",
+    "displayName": "ASP.NET Swagger Explorer",
     "description": "View and call endpoints from ASP.NET with Swagger",
     "publisher": "slimetsp",
     "repository": {
