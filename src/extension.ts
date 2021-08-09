@@ -112,10 +112,13 @@ export async function activate(context: vscode.ExtensionContext) {
     const setSwaggerJsonUrlCommand = async () => {
         const newUrl = await vscode.window.showInputBox({
             title: "Enter a swagger.json url",
-            value: defaultSwaggerJsonUrl,
+            value:
+                swaggerTree.swaggerJsonUrl.length === 0
+                    ? defaultSwaggerJsonUrl
+                    : swaggerTree.swaggerJsonUrl,
         });
 
-        if (newUrl) {
+        if (newUrl !== undefined) {
             swaggerTree.swaggerJsonUrl = newUrl ?? defaultSwaggerJsonUrl;
             swaggerTree.refresh();
             await context.workspaceState.update("aspswagview.setJsonUrl", newUrl);
@@ -137,7 +140,6 @@ export async function activate(context: vscode.ExtensionContext) {
     const runCommand = vscode.commands.registerCommand(
         "aspswagview.createRequest",
         async (node: EndpointOperationTreeItem) => {
-            vscode.window.showInformationMessage(`${node.name}`);
             const url = new URL(swaggerTree.swaggerJsonUrl);
 
             const doc = await vscode.workspace.openTextDocument({
