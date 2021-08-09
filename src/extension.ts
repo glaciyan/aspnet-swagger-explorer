@@ -14,63 +14,13 @@ class SwaggerTreeProvider
 {
     constructor(public swaggerJsonUrl: string) {}
 
-    openApi: OpenApi | undefined;
-
-    openApiResponse: Response<string> | undefined;
-
     getTreeItem(element: Endpoint): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
 
     async getChildren(
         element?: Endpoint | HttpMethodTreeItem
-    ): Promise<Endpoint[] | HttpMethodTreeItem[] | RequestBodyParameter[]> {
-        if (element) {
-            if (element.contextValue === "httpmethod") {
-                element = element as HttpMethodTreeItem;
-                return Promise.resolve(
-                    element.method.requestBody.map((reqbody) => {
-                        return new RequestBodyParameter(reqbody);
-                    })
-                );
-            } else {
-                element = element as Endpoint;
-                return Promise.resolve(
-                    element.methods.map((method) => {
-                        return new HttpMethodTreeItem(method);
-                    })
-                );
-            }
-        } else {
-            if (!this.openApi) {
-                this.openApiResponse = await got(this.swaggerJsonUrl);
-                this.openApi = JSON.parse(this.openApiResponse.body);
-            }
-
-            const paths = Object.entries(this.openApi!.paths);
-
-            return Promise.resolve(
-                paths.map(
-                    ([key, value]: [string, any]) =>
-                        new Endpoint(
-                            key,
-                            Object.entries(value).map(([key, value]) => {
-                                const path = (value as any).requestBody?.content[
-                                    "application/json"
-                                ].schema["$ref"] as string;
-
-                                return {
-                                    type: key,
-                                    requestBody: path
-                                        ? getBodyParams(path, this.openApi!)
-                                        : [],
-                                };
-                            })
-                        )
-                )
-            );
-        }
-    }
+    ): Promise<Endpoint[] | HttpMethodTreeItem[] | RequestBodyParameter[]> {}
 
     private _onDidChangeTreeData: vscode.EventEmitter<
         Endpoint | undefined | null | void
@@ -81,24 +31,8 @@ class SwaggerTreeProvider
         | undefined = this._onDidChangeTreeData.event;
 
     refresh() {
-        this.openApi = undefined;
         this._onDidChangeTreeData.fire();
     }
-}
-
-function getBodyParams(path: string, api: OpenApi): BodyParam[] {
-    const name = path.split("/").pop()!;
-
-    return Object.entries(api.components.schemas[name].properties).map(
-        ([field, type]: [string, any]) => {
-            return {
-                name: `${field}${type.nullable ? "?" : ""}`,
-                type: `${type.type}${
-                    type.format !== undefined ? `(${type.format})` : ""
-                }`,
-            };
-        }
-    );
 }
 
 interface BodyParam {
