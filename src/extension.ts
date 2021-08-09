@@ -14,8 +14,9 @@ import {
     OperationBodyContentTypeLabel,
     OperationBodyParameter,
 } from "./treeitems/OperationBodyParameter";
+import { URL } from "url";
 
-let bodyParamContentType = "application/json";
+export let bodyParamContentType = "application/json";
 
 type TreeItemTypes =
     | EndpointTreeItem
@@ -61,6 +62,7 @@ class SwaggerTreeProvider implements vscode.TreeDataProvider<TreeItemTypes> {
                             op.obj,
                             op.type,
                             (element as EndpointTreeItem).name,
+                            this.openApi!,
                             op.icon
                         )
                 )
@@ -70,30 +72,12 @@ class SwaggerTreeProvider implements vscode.TreeDataProvider<TreeItemTypes> {
 
             element = element as EndpointOperationTreeItem;
 
-            if (element.operation.requestBody) {
-                const params: OperationBodyParameter[] = getParamsFromBody(
-                    element.operation.requestBody as BodyWithContent,
-                    this.openApi
-                ).map(([name, schema]) => {
-                    return new OperationBodyParameter(
-                        name,
-                        schema.type,
-                        schema.format,
-                        schema.nullable,
-                        schema.isRef
-                    );
-                });
-
-                return Promise.resolve(
-                    [new OperationBodyContentTypeLabel(bodyParamContentType)].concat(
-                        //@ts-ignore
-                        params
-                    )
-                );
-            } else {
-                // Empty when no bodyparams
-                return Promise.resolve([]);
-            }
+            return Promise.resolve(
+                [new OperationBodyContentTypeLabel(bodyParamContentType)].concat(
+                    //@ts-ignore
+                    element.params
+                )
+            );
         } else {
             // Default nothing
             return Promise.resolve([]);
@@ -114,75 +98,6 @@ class SwaggerTreeProvider implements vscode.TreeDataProvider<TreeItemTypes> {
         this._onDidChangeTreeData.fire();
     }
     //#endregion
-}
-
-type Params = [
-    string,
-    {
-        type?: string;
-        format?: string;
-        isRef?: boolean;
-        nullable: boolean;
-    }
-][];
-
-function getParamsFromBody(
-    bodyWithContent: BodyWithContent,
-    openApi: OpenAPIObject
-): Params {
-    let body = bodyWithContent.content[bodyParamContentType].schema;
-
-    if (body.$ref) {
-        body = body as ReferenceObject;
-        const schema = resolveRef(body.$ref, openApi);
-        if (!schema)
-            return [["Something went from resolving the reference", { nullable: false }]];
-
-        const [_, schemaObj] = schema;
-
-        const params = getProperties(schemaObj);
-
-        return params ?? [];
-    } else {
-        body = body as RequestBodyObject;
-        return [["Only references are supported", { nullable: false }]];
-    }
-}
-
-function resolveRef(
-    $ref: string,
-    openApi: OpenAPIObject
-): [string, SchemaObject] | undefined {
-    if (!$ref.startsWith("#")) {
-        return undefined;
-    }
-
-    const path = $ref.split("/");
-
-    const schemas = openApi.components?.schemas;
-    if (!schemas) return undefined;
-
-    const schemaName = path[path.length - 1];
-
-    return [schemaName, schemas[schemaName]];
-}
-
-function getProperties(schema: SchemaObject): Params | undefined {
-    if (!schema.properties) return undefined;
-
-    return Object.entries(schema.properties).map(
-        ([name, schema]: [string, SchemaObject]) => {
-            return [
-                name,
-                {
-                    type: schema.type,
-                    format: schema.format,
-                    isRef: !!schema.$ref,
-                    nullable: schema.nullable ?? false,
-                },
-            ];
-        }
-    );
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -212,6 +127,31 @@ export async function activate(context: vscode.ExtensionContext) {
         "aspswagview.refreshEndpoints",
         () => {
             swaggerTree.refresh();
+        }
+    );
+
+    const runCommand = vscode.commands.registerCommand(
+        "aspswagview.createRequest",
+        async (node: EndpointOperationTreeItem) => {
+            vscode.window.showInformationMessage(`${node.name}`);
+            const url = new URL(swaggerTree.swaggerJsonUrl);
+
+            const doc = await vscode.workspace.openTextDocument({
+                language: "http",
+                content: `###
+${node.name.toUpperCase()} ${url.protocol}//${url.host}${node.parentPath} HTTP/1.1${
+                    node.params
+                        ? `
+Content-Type: application/json
+
+{
+
+}`
+                        : ""
+                }`,
+            });
+
+            vscode.window.showTextDocument(doc);
         }
     );
 

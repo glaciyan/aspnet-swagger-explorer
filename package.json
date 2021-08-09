@@ -26,6 +26,11 @@
                 "command": "aspswagview.refreshEndpoints",
                 "title": "Refresh",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "aspswagview.createRequest",
+                "title": "Send Request...",
+                "icon": "$(run)"
             }
         ],
         "menus": {
@@ -33,6 +38,13 @@
                 {
                     "command": "aspswagview.refreshEndpoints",
                     "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "aspswagview.createRequest",
+                    "when": "view == swagger && viewItem == endpoint-operation",
+                    "group": "inline"
                 }
             ]
         },
