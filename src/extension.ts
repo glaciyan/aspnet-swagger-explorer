@@ -75,8 +75,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const setSwaggerJsonUrlCommand = async () => {
         const newUrl = await vscode.window.showInputBox({
-            title: "Set url",
-            placeHolder: "Enter a swagger.json url",
+            title: "Enter a swagger.json url",
             value: defaultSwaggerJsonUrl,
         });
 
