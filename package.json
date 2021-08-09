@@ -20,7 +20,7 @@
             {
                 "command": "aspswagview.setSwaggerJsonUrl",
                 "title": "Set Swagger Json Url",
-                "icon": "$(json)"
+                "icon": "$(edit)"
             },
             {
                 "command": "aspswagview.refreshEndpoints",
@@ -37,7 +37,13 @@
             "view/title": [
                 {
                     "command": "aspswagview.refreshEndpoints",
-                    "group": "navigation"
+                    "group": "navigation@2",
+                    "when": "view == swagger"
+                },
+                {
+                    "command": "aspswagview.setSwaggerJsonUrl",
+                    "group": "navigation@1",
+                    "when": "view == swagger"
                 }
             ],
             "view/item/context": [
@@ -68,7 +74,7 @@
         "viewsWelcome": [
             {
                 "view": "swagger",
-                "contents": "Couldn't find a swagger.json file.\n[Connect](command:aspswagview.setSwaggerJsonUrl)"
+                "contents": "Couldn't find a swagger.json file.\n[Set swagger.json url](command:aspswagview.setSwaggerJsonUrl)"
             }
         ]
     },
