@@ -156,12 +156,21 @@ Content-Type: application/json
                         : ""
                 }`,
             });
+        }
+    );
 
-            vscode.window.showTextDocument(doc);
+    const copyCommand = vscode.commands.registerCommand(
+        "aspswagview.copyRequestUrl",
+        async (node: EndpointOperationTreeItem) => {
+            const url = new URL(swaggerTree.swaggerJsonUrl);
+            await vscode.env.clipboard.writeText(
+                `${url.protocol}//${url.host}${node.parentPath}`
+            );
         }
     );
 
     context.subscriptions.push(tree);
     context.subscriptions.push(changeCommand);
     context.subscriptions.push(refreshCommand);
+    context.subscriptions.push(copyCommand);
 }

@@ -6,7 +6,7 @@
     "repository": {
         "url": "https://github.com/slimetsp/aspnet-swagger-explorer"
     },
-    "version": "0.0.1",
+    "version": "0.0.2",
     "engines": {
         "vscode": "^1.59.0"
     },
@@ -35,6 +35,11 @@
                 "command": "aspswagview.createRequest",
                 "title": "Send Request...",
                 "icon": "$(run)"
+            },
+            {
+                "command": "aspswagview.copyRequestUrl",
+                "title": "Copy Url",
+                "icon": "$(files)"
             }
         ],
         "menus": {
@@ -53,6 +58,11 @@
             "view/item/context": [
                 {
                     "command": "aspswagview.createRequest",
+                    "when": "view == swagger && viewItem == endpoint-operation",
+                    "group": "inline"
+                },
+                {
+                    "command": "aspswagview.copyRequestUrl",
                     "when": "view == swagger && viewItem == endpoint-operation",
                     "group": "inline"
                 }
